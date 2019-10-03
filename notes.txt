@@ -1,0 +1,867 @@
+
+PROLOG NOTES  sections 1 and 2
+
+
+SECTION 1: PROLOG LANGUAGE STRUCTURE              
+
+                    (Refer to files tube1.pl, tube2.pl and ftree.pl 
+                     at the end of this document)
+1.0 Introduction
+     This  section  will  introduce the  syntactic  structure  and 
+meaning of simple Prolog programs. 
+
+     ** a Prolog program is a sequence of CLAUSES, each ending in 
+a full stop.
+     ** each clause may be either a FACT or a RULE.
+
+1.1 Facts
+     The following are examples of facts in a prolog database:
+
+     online(moorgate,northern).      /* see tube1.pl */
+     zone(finsbury_park,2).
+     zone(moorgate,1).
+     father(abraham,isaac).          /* see ftree.pl */
+     sentence(subject(bill),predicate(verb(hit),object(tom))).
+
+     A  fact is simply a PREDICATE followed by a full  stop.  Here
+are some rules about predicates:
+
+    ** each predicate starts with a predicate symbol (e.g.online, zone)
+which  must  be ATOMIC,  an alpha-numeric string starting  with  a
+lower case letter. 
+    ** each predicate has an ARITY equal to the number of its arguments,
+(e.g. all the facts given above have arity 2).
+    ** each  argument  of a predicate can contain  a  TERM  i.e.  a
+constant,  variable,  or  arbitrary structure (all the facts  above
+contain  constants except 'sentence' which contains two  arguments
+which are structures).
+
+1.2 Rules                                                  
+     A  Prolog  clause is a rule if it contains a HEAD  and   RULE
+BODY separated by the ':-' symbol.  Each head must be a  predicate
+and  each  rule  body is a sequence  of  predicates  separated  by
+commas. See tube2.pl and ftree.pl for examples.
+
+     Several clauses whose heads have a common arity and predicate
+symbol  are  grouped  together to form  a  Prolog  PROCEDURE.  For
+example the 'cost' procedure in tube2.pl consists of one rule  and
+one fact.
+
+1.21 Rule Interpretation                                    
+     Rules can be read two ways: DECLARATIVELY or PROCEDURALLY. Take
+the rule from ftree.pl:
+
+       grandad(X,Y) :- father(X,Z), parent(Z,Y). 
+
+     ** X is the grandad of Y is true if there exists a Z such that 
+X is the father of Z and Z is the parent of Y.       (declarative)
+     ** To prove X is the grandad of Y, first prove X is the father
+of some Z, then prove this Z is the parent of Y.     (procedural)
+
+     An example taken from tube2.pl is the rule:
+       sameline(S1,S2,L) :- online(S1,L), online(S2,L).
+
+     ** S1 and S2 are on the sameline L if each are online L.
+     ** To prove S1 and S2 are on the sameline L, first prove S1 is
+online L, then prove S2 is online L.
+
+1.22 Exercise:
+     Guess procedural and declarative interpretations for the other 
+rules in ftree.pl and tube2.pl.
+
+1.3 Goals                                                  PAGE 3
+     To activate or run a program a GOAL is typed to the  Prolog 
+interpreter.  It will respond with 'no' (failure) or yes (success)
+together  with  the successful instantiations  of  variables  that 
+appeared in the goal.
+     The  interpreter  must of course be  supplied  with  relevant
+Prolog files before a goal has a chance of succeeding ( one  would 
+initially type ['tube1.pl','tube2.pl'].  to read in the files  for
+the following ).
+
+ 1.31 Examples:
+
+a.   ?-online(moorgate,Line).   /*goal with one variable - Line */
+     Line = northern            /*fact in tube1.pl gives answer*/
+     yes
+
+b.   ?-cost(moorgate,euston,40). /* goal with no variables */
+     yes
+
+c.   ?-sameline(moorgate,kings_cross,X).
+     X = northern;            /* user types ';' for alternative */
+     X = circle
+     yes
+
+d.   ?-sameline(X,Y,northern).
+     X = kings_cross
+     Y = moorgate
+     yes
+
+e.   ?-descendant(abraham,X).  /* if ftree.pl has not been     */
+     no                        /* consulted the goal will fail */
+
+
+ Note the use of variables that gives the goals in examples  c. and   
+d. different meanings: 
+
+     ** find a line X that moorgate and euston are both on.
+     ** find stations X and Y that are both on the northern line.
+
+1.32 Exercise:
+     A goal is sometimes called a 'headless rule'. Why?
+
+1.4 Matching                                               
+
+     The  matching  operation is fundamental to  Prolog.  For  two 
+predicates to  match: 
+
+     ** both predicate symbols and arities must be identical.
+     ** corresponding arguments are identical OR
+       a variable corresponds to a term, in which case we say
+       that the variable is INSTANTIATED to that term.
+
+1.41 Examples of Matching (see 1.31)   
+
+a.   'online(moorgate,Line)' matches  'online(moorgate,northern)'
+     Predicate symbols 'online' match and both arities are 2.
+     1st arguments are identical and the 2nd instantiates Line to
+     northern.
+
+b.   'cost(moorgate,euston,40)' matches 'cost(S1,S2,40)'
+     Predicate symbols 'cost' match and both arities are 3.
+     1st and 2nd arguments cause variable instantiations 
+     S1 = moorgate and S2 = euston. 3rd arguments are identical.
+
+1.42 Exercise
+
+     Work out whether the following pairs of predicates match, and
+give variable instantiations where appropriate:
+
+a. father(X,esau) with father(isaac,Z).
+
+b. cost(X,Y,40) with cost(U,V,60).
+
+c. sentence(X,predicate(Y,object(Z))) with
+   sentence(subject(bill),Predicate)
+
+d. sentence(X,predicate(Z)) with
+   sentence(subject(bill),predicate(verb(hit),object(bill)))
+
+
+1.5 Section Summary                                       
+
+     ** Prolog programs are a sequence of clauses and each clause
+        may be a fact (a unit clause) or a rule.
+
+     ** Facts  and  rules  are made  from  predicates  which  are 
+        uniquely determined by their predicate symbols and arities.
+
+     ** A rule may be given a declarative (logical) or procedural
+        interpretation.
+
+     ** Progams are activated by the user typing in a desired goal
+        to the interpreter.
+
+     ** Two  predicates  match if  their  predicate  symbols  and
+        arities are identical, and corresponding arguments are 
+        identical or variables can be instantiated by terms. 
+
+
+1.6 Practical Exercises                           
+
+1.  Try  out the examples in 1.31 (don't forget to  consult  files
+tube1.pl and tube2.pl first).  Ask for alternative answers to  the 
+ones given by typing a ';' as in 1.31c.
+
+2.  Give an interpretation for the double goal
+     'sameline(kings_cross,X,Line),cost(kings_cross,X,60).'
+    Try it as in question 1.  
+        
+3.   Create  a  rule for the grandmother relation and  add  it  to 
+ftree.pl, and try it out with some goal queries such as 
+     '?-grandmother(jane,freda).'
+
+4.   Add rules to ftree.pl which specify (as in 3.):
+     a. X is the aunt of Y.
+     b. X is the cousin of Y. (hard)
+     a. X is related to Y. (hard)
+                
+                
+SECTION 2: PROCEDURAL OPERATION         
+                                (Refer to tube1-3.pl and ftree.pl)
+
+2.0 Introduction
+     This  section will explain how simple programs  work,  or  in 
+Prolog terminology how goals succeed.  It will therefore cover the
+control  mechanisms  of  goal  sequencing and  backtracking.
+(Recursion will be covered in the next section).
+
+2.1 Success
+     A goal succeeds if either
+     ** it matches with a fact or
+     ** it matches with a rule head whose body predicates, viewed
+       as (sub) goals, all succeed.
+
+2.11 Examples
+
+a. Referring to 1.31a and 1.41a, the goal 'online(moorgate,Line)'
+succeeds since it matches with a fact.
+
+b. Refering to 1.31b and 1.41b, the goal 'cost(moorgate,euston,40)'
+matches  with the predicate head  'cost(Station1,Station2,40)'  of 
+the  cost  procedure  in tube2.pl.  Each of  the  body  predicates 
+succeed by matching facts hence by 2.1 the main goal succeeds.
+
+2.12 Exercises
+
+     Work out whether the following goals succeed, when the file
+ftree.pl has been consulted:(check your answers at the practical)
+a. grandad(isaac,fred).
+b. brother(jacob,esau).
+c. descendant(abraham,jenny).
+
+2.2 Goal Ordering                                          
+
+     Declaratively, the ordering of rules in a program, and body
+predicates inside a rule, makes no difference to the meaning.  
+     Procedurally, the following two rules apply:
+
+2.21 ** a goal always searches through the clauses in a program for
+       a matching predicate in a TOP DOWN fashion.  Thus if  there
+       is more than one possible match, the first one in the clause
+       sequence is chosen. 
+
+2.22 ** the  subgoal  predicates  in  a  rule's  body  are   always
+       invoked in a LEFT TO RIGHT order. Once invoked, they search
+       through the program clauses for a match as in 2.21.
+
+     We  now have covered the basic 'control flow' of Prolog  i.e. 
+goal sequencing. During execution, a goal predicate searches for a 
+successful match with facts or rule heads,  starting from the  top 
+of the program:
+
+     ** if the goal matches a fact,  it succeeds immediately;
+     ** if the goal matches a rule head the rule is activated and
+      the rule body predicates are treat as goals sequentially  
+      from left to right;
+     ** otherwise the goal fails.
+
+2.3 Binding of Variables within Clauses                     
+
+     The  variable instantiations that occur when a goal matches a 
+rule  head  cause  ALL  OCCURRENCES  OF  THOSE  VARIABLES  TO   BE 
+INSTANTIATED THROUGHOUT THE RULE. 
+
+2.31 Example
+     Consider  the goal of 2.12a.  It matches with  the  'grandad'
+rule head in ftree.pl with instantiations X = isaac, Y = fred. The 
+'father' subgoal is then activated but with X bound to isaac. 
+     Variables   within   a  rule  may  also   become   bound   by
+instantiations following the successful calling of a subgoal:
+
+2.32 Example
+     Following  from  2.31,  the 'father'  subgoal  succeeds  with
+instantiation  Z  = jacob.  This binds Z to jacob  throughout  the 
+rule.  The final subgoal invoked is 'parent(jacob,fred)' since Z 
+and Y are both bound to those values by this time.
+
+2.33 Variable scope
+    ** The scope of a variable is precisely within the clause that
+it  appears.  Two  variables with the same name but  in  different
+clauses are therefore independent.     
+    ** When  a rule becomes active its variables may be  bound  to
+terms.  Once  bound  those values can never be changed  or  undone 
+(i.e. no destructive assignment statements) except by backtracking
+(see  next section).  If the rule is activated again at any  other
+time during the same program execution (by head matching) then its 
+variables are independent of the former activation. 
+
+2.4 Backtracking                                            
+    
+     In example 2.32 above the subgoal 'father(isaac,Z)' succeeded 
+binding  Z to jacob.  But what if the facts in ftree.pl were in  a
+different order, say 'father(isaac,esau)' came first? 
+     Then the subgoal would still succeed but Z would be bound  to 
+esau,  and  subsequently  the second  subgoal  'parent(esau,fred)' 
+would fail (check).
+     This is where Prolog's backtracking mechanism comes in.
+
+2.41 Principle of Backtracking
+
+     Consider a rule of the form:
+   A :- ... B,C ...    (where A, B and C are arbitrary predicates).    
+     Assume:
+ The rule is activated by a goal predicate matching with A;
+ All the subgoals succeed up to and including B;
+
+ C fails. 
+
+      Then:          (Prolog backtracks.. )
+
+     Prolog  will  attempt to RE-SATISFY B so  that  it  may 
+succeed with a different set of bindings on its variables. This is
+accomplished  by  failing the last match  that  succeeded  B,  and 
+continuing down the program to find an alternative match.
+     If this succeeds,  C is tried again with the new bindings, if
+it fails, Prolog may backtrack further.
+     If backtracking ever reaches the ':-' symbol,  then the whole 
+rule  is  said to have failed.  (Note that predicates match  in  a
+unique  way,  so  an  alternative set of  bindings  can  never  be 
+obtained from a goal matched with a rule head.) 
+
+2.42 Example                                               PAGE 5
+     Consider the goal '?-sameline(kings_cross,barbican,Line).'
+With the database as written in tube1.pl, the second subgoal of the
+sameline  rule will fail and cause backtracking  until  eventually
+variable Line1 is bound to piccadilly.
+
+2.43 Example
+     Consider the following program:
+  furry(tabby).      furry(leo).      small(tabby).
+  has_whiskers(leo). has_big_teeth(leo).  has_whiskers(tabby).
+
+  cat(X) :- has_whiskers(X), furry(X).
+
+  timid(X) :- cat(X), small(X).
+
+     If the query '?-timid(X)' was typed,  the second rule's first
+predicate  'cat(X)' would succeed with X  =  leo;  this,  however,
+would  cause  the  second  predicate to  fail  and  control  would
+backtrack to 'cat(X)'.
+     Recall that the last successful match is failed:  this is the 
+match  of furry(leo) of the 'cat' rule with the identical fact  in 
+the  database.  furry(leo) fails completely since it can  find  no
+alternative  match;  consequently backtracking takes place in  the 
+'cat' rule which eventually results in a success with X = tabby.
+     The predicate 'small(X)' with this binding then succeeds.
+
+2.44 Exercise
+     Consider the 'route' procedure in tube3.pl. Work through some
+'hand  runs' of program execution,  and check your answers in  the
+practical.   (This  should  show  how  heavily  Prolog  relies  on 
+backtracking.)     
+
+2.5 Section Summary                                         PAGE 6
+
+** A goal succeeds (or is satisfied) if it matches a fact or if it
+   matches a rule head whose subgoals succeed.
+
+** Clauses are searched through top-down, and subgoals are invoked
+   within a rule from left to right.
+
+** Once  a  variable  is  instantiated  to  a  value,  all  other 
+   occurrences  of  that variable within (an activation instance of)
+   a clause are likewise bound. This binding can only be undone 
+   by backtracking.
+
+** If one of a rule's subgoal fails, control backtracks to the 
+   subgoal on its left, and an attempt is made to re-satisfy the 
+   last successful match that this previous subgoal caused.
+
+2.6 Practical Exercises                                    
+
+1. Using the Prolog implementation, check your answers to 2.12. 
+
+2. Compose rules defining brother, sister, uncle (etc) relations,
+add them to ftree.pl and test them.
+
+3. Experiment with the 'route' procedure given in tube3.pl. What
+differences will changes to the subgoal ordering make?
+
+4. Modify the sameline predicate in tube2.pl so that it will fail
+if  Station1  equals Station2 (You need to  use  
+special built in  'not' and '=' predicates).    
+
+
+SECTION 3: RECURSION AND THE CUT  (Refer to ftree.pl)           
+
+3.0 Introduction
+     To write interesting programs in Prolog (or in any other non-
+imperative language) one must use the concept of recursion, i.e. a 
+procedure  calling  itself.  This and  more  complex  backtracking
+control will be introduced in this section.
+
+3.1 The role of Recursion
+    ** it does for Prolog what 'iteration' (do-loops, while loops)
+     does for imperative languages:  provides a means for encoding
+     non-trivial algorithms.
+    ** all known algorithms can be encoded recursively, and many
+     are more naturally defined this way.
+
+3.11 Examples of Recursion
+a. A very well known example is the factorial function:
+     factorial(N) = if N>1 then N*factorial(N-1) else 1
+b. The 'descendant' procedure of ftree.pl is a typical example of
+recursion in Prolog:
+    ** it  employs  'tail  recursion' - the last  subgoal  in  the 
+     second rule calls itself.
+    ** it contains a non-recursive clause (the first rule) so that
+     recursion will eventually stop.
+    ** it captures the concept naturally yet operationally:  X has
+     a descendant Y if either X is the parent of Y or  Y  descends
+     from one of X's children. 
+
+3.12 Pitfalls!                                              
+    ** Care must be taken when designing recursive procedures  to
+     ensure that termination will occur on any input. 
+  For instance, it is especially easy to unknowingly create infinite
+ loops with mutually recursive procedures: 
+     bill :- ben.   /* a call to bill or ben will cause looping */
+     ben  :- bill.  
+  Is there any way that 'descendant' can loop indefinitely?     
+    ** Recursion may be very inefficient both in terms of time and 
+     space.          
+  For instance,  consider the recursive descendant rule:  Prolog 
+must  keep a stack of records holding all the   variable  bindings 
+from each of it's activations. 
+
+3.13 More Examples
+a.    Recursive procedures can be both powerful but also difficult
+to  understand (especially if they're someone else's).  Here is  a 
+short solution to the famous 'Towers of Hanoi' problem: 
+     move(0,_,_,_).       /* recursion stops at N = 0 */
+     move(N,Left,Middle,Right) :-
+               M is N-1,  /* 'is' is like assignment-see later */  
+               move(M,Left,Right,Middle),
+               write('move from '),write(Left),
+               write(' to '),write(Right),nl,
+               move(M,Middle,Left,Right).
+     hanoi(N) :- move(N,left_peg,middle_peg,right_peg).
+
+b.    Examine the recursive 'route' procedure of tube4.pl 
+
+3.2 The Cut                                                 
+     If  a (sub)goal fails for any reason during execution  Prolog
+will  always  try to bactrack (see 2.4).  In many cases this  will 
+be inefficient, in some cases wrong.
+
+3.41 Example
+     Consider  a  program which must  differentiate  an  algebraic 
+expression   F  then solve the equation dF/dx =  0.  Part  of  the 
+program may look like:
+     main(F, Solution) :- diffx(F, DF), solve(DF, Solution). 
+     Since differentiation is a function it must return  a unique 
+result (which would instantiate DF), therefore  if 'solve'  fails 
+we do not want Prolog backtracking to within 'diffx', yet that is 
+exactly what would happen.
+
+3.42 Definition of the Cut
+     The cut is written '!'.  It is a predicate with the following
+properties:  
+    ** As  a  subgoal it always succeeds the first  time  it  is 
+      invoked in an activation of a rule.
+    ** If on backtracking the cut is re-invoked, it not only fails
+      the  current rule activation BUT ALSO FAILS THE  GOAL  THAT
+      ACTIVATED THE RULE.    
+    ** it may be placed anywhere (as a predicate) in the body of
+      a rule.
+
+3.43 Examples                                                
+
+a.  The solution to 3.41 is thus:
+     main(F, solution) :- diffx(F, DF), !, solve(DF, solution).
+b.  Consider a program with rules of the form (where A, B, C, X, Y 
+,Z are arbitrary predicates):
+     X :- ... Y, Z, ...        /* rule 1 */
+     A :- ... B, !, C, ...     /* rule 2 */
+Assume the following takes place:
+     rule 1 is activated and its subgoals succeed up to Y; 
+     Z is invoked and matches A, thereby activating rule 2;
+     rule 2's subgoals succeed past B and the cut;
+     C fails (or succeeds but subsequently fails on backtracking);
+then
+     the cut will cause the goal that activated the rule it is in, 
+i.e.  Z,  to fail.  Control will next backtrack in rule 1 and  re-
+invoke Y.
+     
+3.44 Exercise
+     Consider the following prolog program:
+
+brick(shape1).   brick(shape2).   brick(shape3).   
+cylindrical(shape2).     cylindrical(shape3).
+smaller(shape2,shape3).  smaller(shape2,shape4).
+smaller(shape3,shape4).
+supports(shape2,shape4). supports(shape3,shape4).
+pillar(X) :- brick(X),cylindrical(X),!,smaller(X,Y),supports(X,Y).
+
+Describe the program's behaviour when called with '?-pillar(X)'.
+How would this change if the rule was changed to:
+pillar(X) :- brick(X),cylindrical(X),smaller(X,Y),!,supports(X,Y).
+
+3.25 Notes about the Cut                                    
+    ** The cut is sometimes compared to a kind of fence:
+
+                       || 
+         -->         |  |        -->          -->
+                   |    |      control
+              ,  |______| ,
+
+     -one that can be easily crossed from left to  right,  but 
+       not vica-versa.         
+    ** The cut makes its left hand side deterministic in the sense
+that it commits the rule to the binding 'choices' made before it.
+    ** The cut can save a good deal of space:
+     Local  stack  to the left of a cut is re-used since  it  will
+never be needed on backtracking.
+              ..and time:
+    Even if procedures are designed to give no alternative result
+when backtracked over, the cut makes sure such useless backtracking
+never happens.
+
+3.3 The Trace Facility                                   
+     Larger  Prolog  programs tend to  exhibit  quite  complicated
+backtracking   and  recursive  behaviour.   This  contrasts   with
+traditional   languages'  state  space  model  which  seems   more
+immediately appealing to the intuition.  Debugging logical  errors 
+in Prolog, however, can be helped by using the trace facility.  
+
+3.31 Main Modes
+     Consult the C-Prolog manual (4.3) for a full account.
+     ** to start the trace facility, simply type 'trace.' before
+executing your program. 
+     ** to walk through the execution,  simply type '<cr>'  after 
+each prompt;  to skip any goals whose traces are not required type 
+'s'.
+     ** to stop an execution and start the trace, type Ctl C and
+respond to the prompt with 't <cr>' .
+
+3.4 Section Summary                                           
+     ** Non-trivial algorithms in Prolog usually involve recursive 
+procedures. 
+     ** The cut is a predicate which fails the calling goal of the 
+the rule it is in if control backtracks on to it.
+     **  The  trace facility helps with the debugging  of  logical
+errors, and aids understanding of Prolog's procedural behaviour.
+
+3.5 Practical Exercises                                   
+1. Implement the program in 3.44, and test it with the cut in 
+various positions.
+2. More tube examples: (refer to tube3.pl) Modify the route
+procedure so that
+   a. it can handle routes of more than one station change;
+   b. the cost of the journey is printed out as well as the route; 
+   c. alternate routes can be asked for by typing ";" ;
+   d. the direction of the journey along each tube line is output.
+
+SECTION 4: DATA STRUCTURES IN PROLOG               
+
+4.0 Introduction
+ Data Structures:
+             ** are used to model objects and their relationships.
+             ** are manipulated by program procedures.          
+     Early Programming Languages provided data types with little
+or no structure (integers,strings and arrays of them) reflecting
+the numeric bias to computing applications.
+     Modern   general purpose languages provide   records,   sets,
+lists etc.  which allow the user to capture more of the  semantics
+of a problem.
+ Using richer data structures generally leads to:
+              ** easily understandable and extensible code.
+              ** more intelligent programs.
+     In Prolog all data structures are instances of one data  type
+called  the structure.  Records and lists can be seen  as  special
+cases of the structure.
+ Informally, a structure is made from:
+              ** functors   (e.g.predicate symbols, functions)
+containing structures, and/or constants ( numbers and names starting
+with a lower case letter) and/or variables.
+  All  facts, and  other predicate  structures  within  rules, are
+examples of the STRUCTURE.
+
+4.1 The TERM                                               PAGE 2
+     The term is the smallest syntactically legal unit in  Prolog.
+It is defined as:
+              ** a constant      or
+              ** a variable      or
+              ** a structure.               
+     Thus  we can recursively define a structure as a functor  with
+one or more arguments containing terms.
+4.11 Exercise 
+     Construct a simple Backus-Naur Form (B.N.F.) definition of  a
+term and a structure.
+
+4.2 Examples of Structures and their tree representation
+     Consider the following examples of structures:
+a.   online( moorgate, northern)
+b.   zone( finsbury_park, 2)
+c.   sentence( subject(X), predicate(verb(Y),object(Z)) )
+d.   employee( name(bloggs,fred), salary(9500), position(clerk) ) 
+e.   5*x^2 + 3*x - 8   
+(N.B.  example e.'s function symbols (operators) must be  declared
+within the enclosing prolog program to define operator  precedence
+otherwise  the same expression can be written in prefix mode  like
+a.-d. as '-( +( *(5,^(x,2)), *(3,x) ), 8 )'   ).
+
+The examples' structure can be viewed graphically:
+a.      online              b.              zone
+          /\                                 /\
+         /  \                               /  \
+  moorgate  northern             finsbury_park  2 
+
+c.          sentence        d.             employee
+               /\                           / | \
+              /  \                         /  |  \
+             /    \                       /   |   \
+       subject    predicate           name  salary position
+          |          /\               /\       |       |
+          |         /  \             /  \      |       |
+         X       verb  object    bloggs fred  9500    clerk
+                  |     |
+                  |     |
+                 Y     Z      
+
+ Note that the leaves are always constants or variables whereas
+ the branches and root are functors.  
+
+4.21 Exercise: Matching of Terms
+     One  way of finding whether 2 terms match is to draw them  in
+tree  form  and check that where the trees are  not  identical,  a
+variable in one matches with a subtree of the other. 
+     Assuming  that a prolog database consists of the facts  a.-e.
+above,  what will Prolog output to the following queries?  (Check
+your answers in the next practical).
+
+a. employee(U,V,position(W)).
+b. employee(name(U),salary(V),W).
+c. sentence(subject(phrase(the,man)),U).
+
+4.3  Temporary(Local) and Permanent(Global) Data       
+
+     Prolog allows two distinct ways that data may be stored:
+A. During program execution, variables within a clause may become
+instantiated to a term. The variable will hold this value until
+      either -the end of program execution
+      or     -the instantiation is undone through backtracking.    
+This  data  is thus stored locally to a clause and  exists  during
+runtime only.
+B.  Facts (called 'unit clauses') constitute permanent data  since 
+they  are not normally changed during execution and are  presented
+to the prolog environment in the same manner as other clauses. 
+Exceptions:
+     ** Clauses can be added or removed during a program run by the
+special predicates 'assert' and 'retract'.  The 'assert' predicate
+can  be seen as transferring temporary data to a  permanent  form,
+i.e. present in the program after execution.
+     ** Clauses  can  be  added to a  program  if  it  executes  a
+'consult(File)'  predicate during a program run which simply  adds
+all the clauses in File on to the end of the program. 
+
+4.31 Example
+     Temporary  data  in exercise 4.21 are the  variable  bindings
+that Prolog outputs in response to the queries.  The facts 1.11a.-
+e. are permanent data.
+
+4.4 Numeric data in Prolog                                  
+
+     Numeric constants are terms as defined in section 1.1. Prolog
+has the following special built-in operators available:
+     ** '+', '*', '-', '/', 'mod', etc can combine with numbers and
+variables to form arbitrary arithmetic expressions ( <Aexp> ). Note
+that <Aexp>s can only be evaluated by the operators given below.
+     ** '>'  ,'<'  ,'>='  ,  '=<' ,'='  ,etc  are  infix  predicate
+operators  that evaluate in the usual way (Some implementations 
+stipulate that arguments must be numbers or variables instantiated
+to numbers rather than arbitary arithmetic expressions).
+     ** 'is'   is  an  operator  that  is  similar  to   assignment
+statements of other languages.Its form is '<term> is <Aexp>' which 
+means match <term> to the value of <Aexp>.  
+
+4.41 Example
+     Here is a Prolog program to print out an 'N times table':      
+     n_times_table(N) :- mult(N, 1, 12).
+     mult(N, Lower, Upper) :- Lower =< Upper,
+                              Result is Lower*N,
+                              write(Result),nl,
+                              Lower1 is Lower+1,
+                              mult(N, Lower1, Upper).
+     mult(N, Lower, Upper) :- Lower > Upper.
+
+4.42 Exercises
+a. Write a procedure called 'not_eq' that succeeds only if its two
+numeric arguments are unequal.          
+b. Write a procedure to return the maximum of two numbers.
+
+4.5 Section Summary                                      
+  ** Rich data structures are essential for effective  high  level
+     programming in non trivial applications.
+  ** All  Prolog data  structures are instances of the Structure.
+  ** Structures can be graphically represented as trees.
+  ** Structures are present during Prolog  execution  either  as
+     permanent or temporary data (asserted facts or instantiations). 
+  ** Numeric data in Prolog is only evaluated when an argument  of
+     one of the special 'evaluable predicates'.
+
+4.6 Practical Exercises                                   
+1.  Check  results  to Exercise  4.21,  and  implement  your
+answers to Exercise 4.42.
+2.   Consult  tube2.pl.  Replace the cost procedure with one  rule 
+that calculates the fare between two stations on the basis of  40p
+per zone. 
+3. Create  a  small employee database similar to the  format  of
+example 1.2d. Write procedures to
+a. output a person's salary using his surname as a key.
+b. output the names of persons in a certain occupation.
+c. output the names of persons earning more than a certain salary.
+d. output the total annual wage bill.
+4. Implement the factorial function.
+
+SECTION 5: THE LIST DATA STRUCTURE               
+
+5.0 Introduction
+     The LIST is described as
+         ** the most common data structure in symbolic programming.
+         ** a specialisation of Prolog's 'structure'.
+     Lists  in prolog consist of a sequence of terms separated  by 
+commas  and enclosed in square brackets.  A special list  with  no
+terms is called the 'empty list' and written as  ' [ ] '.
+
+5.01 Examples (see also tube5.pl) 
+a. [ bank, moorgate, old_street ]
+b. [ john, [ X, mary] ]
+c. placing( red_rum, [ 1, 4, u, 2, 1, f, 3 ] )
+d. [ [ [ x, y ], z ] ] 
+
+5.1 Lists are Structures
+     The  list is defined as a structure using a  special  functor 
+'.' which takes 2 arguments:
+       ** the first term in the list, called the HEAD of the list.
+       ** the list with its first term removed, called its TAIL.
+     Example a. above could therefore be written:
+     . ( bank, [ moorgate, old_street] )
+     All lists must be  'anchored' by [ ], which means that a list
+with only one term t,  i.e.  [ t ],  has head t and tail [ ]. Thus
+example a. can be further rewritten: 
+     . ( bank, . ( moorgate, . ( old_street, [ ] ) ) )
+
+5.11 Lists in tree form                                     
+     Trying  to write the rest of examples 5.01 in  '.'  structure
+format would prove very cumbersome ( that's why they are given the 
+special square  bracket syntax ! ). Here are some of the  examples
+of 5.01 in a 'square' tree representation of 4.2: 
+
+a.   . ----- . ----- . ----- [ ]   b.   . ----- . ----- [ ]
+     |       |       |                  |       |
+     |       |       |                  |       |
+  bank  moorgate  old_street          john      . ----- . --- [ ]
+                                                |       |
+                                                |       |
+                                               X       mary
+c.  placing
+     |     \
+     |      \
+   red_rum   . ____ . ____ . ____ . ____ . ____ . ____ . ____ [ ]
+             |      |      |      |      |      |      |
+             |      |      |      |      |      |      |
+            1      4      u      2      1      f      3
+
+Exercise 5.12  Put 5.01d into tree form.
+Exercise 5.13  Here are some examples of heads and tails of lists:
+     list                      head           tail
+     ----		       ----           ----
+     example 5.01a             bank     [ moorgate, old_street ]
+     example 5.01b             john        [ [ X, mary ] ]
+     example 5.01c          [ [ x, y ], z ]    [ ]
+
+Find the head and tail of the following lists:
+a. [ [ x, y ], z]                b. [ [ x, y ], [ x, y] ]     
+c. [ [ [ x ], [ y ] ] ]          d. [ x, [ [ y ] ] ]
+
+5.2 Processing Lists                                        
+     Lists are GENERAL and DYNAMIC data structures because:
+       ** they can be of any size and contain arbitary structures.
+       ** procedures that process lists can generally accept them
+          of any length.
+       ** there are convenient ways to join,  split up or  search
+          through lists.
+
+5.21 The ' | ' operator
+     In Prolog,  lists are built or split up via matching and  the
+special bar infix operator ' | '.  This is placed inside the list-
+the following examples show its effect:  
+    ** [ X | Y ] means the list with head X and tail Y.
+    ** [  X  | [ fred ] ] means the list with head X  and  tail
+       [fred], i.e. the list with 2 elements [ X, fred]
+    ** [ X | Y ] would match the list [bank, moorgate, old_street]
+       with instantiations X = bank, Y = [moorgate, old_street].
+
+5.22 Example: A simple list processing procedure
+     A procedure called 'split'  is required that takes one  input 
+parameter,   a  list,   and  2  output  parameters  which   become 
+instantiated to the head and the tail of the list respectively.
+e.g. split( [bank, moorgate, old_street], X, Y) should cause
+Prolog to respond:     X = bank
+                       Y = [moorgate, oldstreet] 
+     Solution:     split( [ X | Y ], X, Y).
+
+5.23 Exercise: Implement the 'procedure' of 5.22 to check answers to 5.13.
+            
+5.3 A Standard List Processing Procedure                   
+     Virtually all list processing carried out in prolog contains 
+the following characteristic thread:  
+     'Break the input list down into its head and tail with an
+      expression of the form '[ X | Y ]' . Process the head X. 
+      Recursively call this procedure with input list = tail Y .'
+     The most common list processing procedure 'member(X,Y)' is 
+defined declaratively as:
+     ' X is a member of list L IF X matches one of L's elements '
+     ..or recursively
+     ' X is a member of list L IF X matches the head of L OR
+       X is a member of the tail of L '
+     The latter definition is reflected line for line in the prolog
+implementation:
+     member( X, [X|Tail] ).
+     member( X, [Head|Tail] ) :-  member( X, Tail). 
+
+5.31 Example
+a. Consider the call ' member( euston, [ holburn, euston ] ) '.
+Matching  with  the  first  clause  will  fail  since  X   becomes
+instantiated to euston via the first argument whereas matching the
+second gives the instantiations X = holburn, Tail = [ euston ].
+b. Matching the second clause of the procedure will succeed  with 
+X = euston, Tail = [ euston ] (Head is irrelevent).  A recursive
+call  of  ' member( euston,  [ euston ] )' succeeds at  the  first 
+member clause with X = euston, Tail = [ ]. 
+
+
+5.4 The append procedure                                    
+     Procedure append(X,Y,Z) is defined declaratively as 
+     'Z is the list X joined with list Y'
+e.g. the result of call: 
+     'append( [ moorgate, old_street ], [ angel, kings_cross ], Z)' 
+would be Z = [ moorgate, old_street, angel, kings_cross ].
+     One implementation of append is as follows:
+     append([ ], Y, Y).
+     append([Head|Tail], Y, [Head|Rest] ) :- append(Tail, Y, Rest).            
+
+5.41 Procedural operation of append
+     As  with  the member procedure,  the operation of  append  is
+typical of list processing.  The second clause breaks up the first 
+input  list into its Head and Tail (and leaves the second  list  Y
+unchanged)  but  it also partly instantiates the output  with  the 
+Head  of  the  first list.  The Rest of  the  output  will  become
+instantiated through the recursive call append(Tail, Y, Rest).
+     Since  this  call  contains  a  shortened  input  list,   the 
+recursion  will  eventually succeed when Tail = [ ] and  the  call 
+matches  the  first clause.  This causes the  last  'Rest'  output
+variable  to be instantiated to the second list Y,  and  recursion
+'unwinds' leaving Y at the tail of the output list. Top level Rest
+will, in the example above, become instantiated to:
+     [ moorgate | [ old_street | [ angel, kings_cross ] ]]   
+which is equivalent to the result above.
+
+5.42 Exercise
+     Use Prolog's trace facility to check the operation of 2.41.
+
+5.5 Section Summary                                       
+  ** The List is a general, dynamic and convenient data structure.
+  ** Lists can be represented as a structure using  the  special
+     dot functor.
+  ** Lists are broken down into their head and tail via matching
+     and the special '|' operator. 
+  ** List processing usually works by performing some operation
+     on the head of a list then recursing with the tail.    
+  ** The member and append procedures are two of the most  common 
+      in list processing.
+
+

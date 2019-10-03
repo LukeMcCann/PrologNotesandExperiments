@@ -1,0 +1,884 @@
+
+PROLOG TUTORIAL 3: PROCEDURAL OPERATION  
+
+
+This tutorial will explain how simple Prolog programs  work.  We 
+will  cover:
+* the  idea  of goal  success,
+* the  ordering  of  goal matching and invocation,
+* variable binding within an activated rule,
+* variable scope. 
+
+1 - Goal Success
+
+*  A  goal  predicate,  <GOAL>  is INVOKED  when  the  user  types 
+"<GOAL>." to the Prolog interpreter (and presses the return key!), 
+or  a  file is consulted which contains a clause of the  form  "|- 
+<GOAL>.".
+ 
+Predicates are also invoked as goals during Prolog execution as we 
+can see from the following definition:
+
+* A goal SUCEEDS if either
+it matches with a fact, or
+it  matches  with  a rule's head and each  of  the  rule's  body's 
+predicates,  viewed as (sub) goals,  are invoked and  consequently 
+succeed.
+
+* example 3.1:  Consider  the following program  consisting  of  6 
+clauses:
+father(paul,peter).                     /* (1) */
+mother(frances,joseph).                 /* (2) */ 
+father(thomas,paul).                    /* (3) */
+father(thomas,frances).                 /* (4) */
+grandfather(Gran,Child) :-              /* (5) */ 
+                    father(Dad,Child),
+                    father(Gran,Dad).
+grandfather(Gran,Child) :-              /* (6) */
+                    mother(Mum,Child), 
+                    father(Gran,Mum).
+
+Assume  we invoke the goal "grandfather(thomas,peter)".  Since  it 
+can only match with rule heads, i.e. those of clauses (5) and (6), 
+all  the  predicates in one of their bodies must succeed  for  the 
+main goal to succeed.  We can see now that the above definition of 
+goal success has the following properties:
+
+* It is recursive: the success of  a predicate may depend upon the 
+successful invocation of other predicates.  In particular, success 
+depends on predicates eventually spawning predicates which satisfy 
+the first condition of the definition i.e. they match with facts.
+
+* It is  non-deterministic:   no  ordering  of  goal  matching  or 
+predicate invocation has been specified.
+
+2- Goal Ordering                                          
+
+* Declaritively,  the ordering of clauses in a Prolog program, and 
+the ordering of body predicates inside a rule, makes no difference 
+to  the  meaning  of the  program.  For  example  the  declaritive 
+(logical) meanings of the two columns of clauses below are identical 
+(we employ a 'logic-like' syntax to emphasise this):
+
+     A if B and C.                 C.             
+     B if A.                       A if C and B.   
+     C.                            B if A.
+
+Procedurally,  the ordering is extremely important;  the following 
+two rules apply:
+
+*  a goal searches through the clauses in a program for   a 
+matching  predicate in a TOP DOWN left to right fashion.  Thus  if 
+there  is more than one possible matching clause, the first one in 
+the clause sequence is chosen.
+
+* the subgoal predicates in a rule's body are normally invoked  in 
+a  LEFT  TO RIGHT order. 
+
+* example 3.1 (continued):  an  invocation  of  the   goal  
+"grandfather(thomas,peter)"  will therefore match with the head of 
+rule  (5);  this rule's body's predicates will next  be  invoked 
+from left to right.  The "firing" of a rule in this way is given a 
+special name: 
+
+*  A  rule is ACTIVATED when the goal  predicate  is  successfully 
+matched  with  its head predicate.  For example we say rule (5) is 
+activated  immediately  after  invocation  of  goal   "grandfather 
+(thomas,peter)".   A   rule  remains  activated  until  its   body 
+predicates have all succeeded or failed.
+
+We now have covered simple control flow in Prolog  i.e.  goal 
+sequencing. To summarise:
+
+*  during execution,  a goal predicate searches for  a  successful 
+match  with  facts or rule heads,  starting from the  top  of  the 
+program.
+  
+	- if the goal matches a fact,  it succeeds immediately;
+
+	- if the goal matches a rule head the rule is activated and
+	the rule body predicates are treat themselves as goals, 
+	sequentially from left to right;
+
+	- otherwise the goal fails.
+
+
+
+
+3- Binding of Variables within Clauses                     
+
+* example 3.1 (continued): we have seen  why goal "grandfather 
+(thomas,peter)" would  activate clause (5) by  matching  its   head 
+"grandfather(Gran,Child)". Since the match relied on the  instantiations
+     thomas for Gran, written thomas/Gran,
+     peter for Child, written peter/Child,
+the  two variables will immediately (i.e.  before the  first  body 
+predicate is invoked) be instantiated throughout the whole rule. 
+The general rules are:   
+
+* The variable bindings that occur when a goal matches a rule head 
+cause  all  occurences  of those variables to  be  likewise  bound 
+throughout the rule.
+
+* Whenever  a goal  predicate succeeds  that was invoked  from  an 
+activated  rule,  those variables within the predicate  that  were 
+bound  as  a result of its success cause all occurences  of  those 
+variables to be likewise bound throughout the rule.
+
+* example 3.1 (continued): having activated rule (5) the first predicate 
+in  the rule body is invoked with any variables instantiated  that 
+were  involved  in the head  match  i.e.  "father(Dad,peter)".  This 
+succeeds  by  matching  with  fact (1) with match  Dad  =  paul  and 
+consequently binds Dad to paul within the activation of clause (5). 
+
+Finally  the second predicate,  "father(thomas,paul)",  now  fully 
+instantiated,  is invoked.  It succeeds immediately since it is an 
+identical  match  with clause (4).  The rule that  the  main  goal 
+"grandfather(thomas,peter)" has activated has therefore  succeeded 
+and hence the main goal itself has succeeded.  We summarise this using  a 
+diagram:
+
+MAIN GOAL =       grandfather( thomas, peter ) 
+                                 ||    ||
+matches (bindings                ||    ||
+thomas/Gran, peter/Child)        ||    || 
+to rule:          grandfather( Gran, Child ) :- ...... .  /* (5) */ 
+                                                  
+     (5)'s first SUB-GOAL = father(   Dad,   peter )
+                                      ||    ||
+      matches                         ||    ||
+      (binding paul/Dad)                ||    || 
+      with fact:            father(  paul, peter ).      /* (1) */
+     -SUCCEEDS.                               
+
+     (5)'s second SUB-GOAL = father(thomas, paul ) 
+                                      ||    ||
+      matches                         ||    ||
+      (no bindings)                   ||    || 
+      with fact:             father(thomas, paul ).      /* (4) */
+     -SUCCEEDS. 
+
+-SUCCEEDS.
+
+* example 3.2:  We will use the program of 3.1 wih a different  main 
+goal,  "grandfather(X,joseph)";  our interpretation of this is
+"can the program find  a grandfather for joseph?"
+We will describe  the  execution sequence using a diagram similar to
+the one above:
+
+
+MAIN GOAL =       grandfather(   X,   joseph ) 
+                                 ||    ||
+matches (bindings                ||    ||
+X/Gran, joseph/Child)            ||    || 
+with rule:        grandfather( Gran, Child ) :- ...... .  /* (5) */ 
+                                                  
+     (5)'s first SUB-GOAL = father( Dad, joseph )
+
+This FAILS to find a matching fact or rule head! Prolog's general
+policy whenever a goal fails is called BACKTRACKING and will be
+dealt with shortly. In this particular case, since the first invoked
+predicate of rule (5)'s body has failed, the whole rule is said to 
+have failed: this means (5)'s activation is terminated and any
+variable bindings (such as X/Gran) are undone. Prolog tries for an
+alternative match starting at the next clause down:
+
+MAIN GOAL (RETRY) = grandfather(   X,   joseph ) 
+                                   ||    ||
+matches (bindings                  ||    ||
+X/Gran, joseph/Child)              ||    || 
+with rule:          grandfather( Gran, Child ) :- ..... . /* (6) */ 
+                                                  
+     (6)'s first SUB-GOAL = mother(   Mum, joseph )
+                                      ||      ||
+      matches                         ||      ||
+      (binding frances/Mum)             ||      || 
+      with fact:            mother( frances, joseph ).    /* (1) */
+     -SUCCEEDS.                               
+
+     (6)'s second SUB-GOAL = father(  X,    frances ) 
+                                      ||      ||
+      matches ||      ||
+      (no bindings)                   ||      || 
+      with fact:             father(thomas, frances ).    /* (4) */
+     -SUCCEEDS. 
+
+-SUCCEEDS.
+
+Prolog would now reply in the form:
+	X = thomas
+|- yes
+
+You should realise now how Prolog rules, such as the grandfather rule above,
+can be used in a variety of ways, depending on whether we use variables
+or constants in the goal invocation.. We will use as examples some
+general goal forms for the grandfather rule:
+
+* grandfather(<so-and-so>,<so-and-so1>)    (as in example 3.1)
+ our interpretation is:-
+ "can the program prove that <so-and-so> is a grandfather of <so-and-so1>?";
+
+* grandfather(<variable>,<so-and-so>)    (as in example 3.2)
+ our interpretation is:-
+ "can the program find  a grandfather for <so-and-so>?";
+
+* grandfather(<so-and-so>,<variable>)
+ our interpretation is:-
+ "can the program find  any granchild of <so-and-so>?";
+
+* grandfather(<variable>,<variable>)
+ our interpretation is:-
+ "can the program find  any granchild of anybody?. 
+
+
+4- Rules of variable scope
+
+In example 3.1 the same variable names are used in clauses (5) and (6).
+This concerns the rules of variable scope:
+   
+* The scope of a variable is precisely within the clause that
+it  appears.  Two  variables with the same name but  in  different
+clauses are therefore independent.     
+
+This is also the case for invoked goals. Consider the invocation
+"grandfather(thomas,Child)" to the program of 3.1. Although both the
+goal and the rule that it activates contain the same variable
+name "Child", they are independent unless bound by matching, in 
+which case they will refer to the same value. 
+
+The reader should also have noticed differences between the idea of a
+"variables" as used in conventional programming languages, (e.g. 
+Basic, Fortran, Pascal), and Prolog: 
+
+* When  a rule becomes active its variables may be  bound  to
+terms.  Once  bound  those values can never be changed  or  undone 
+(i.e. the1r are no destructive assignment statements) except by 
+backtracking.
+
+* If a rule is activated again at any  other
+time during the same program execution  then its 
+variables are independent of the former activation. 
+
+* Example 3.3: This is a modified version of program 3.1:- 
+
+father(paul,peter).                     /* (1) */
+mother(frances,joseph).                 /* (2) */ 
+father(thomas,paul).                    /* (3) */
+father(thomas,frances).                 /* (4) */
+
+parent(Dad,Child) :- father(Dad,Child).     /* (5) */
+parent(Mum,Child) :- mother(Mum,Child).     /* (6) */
+
+grandfather(Gran,Child) :-              /* (7) */ 
+		parent(MumorDad,Child),
+		father(Gran,MumorDad).
+
+ancestor(Elder,Younger) :-              /* (8) */
+	        parent(Elder,Younger). 
+ancestor(Elder,Younger) :-              /* (9) */
+		ancestor(Elder,Parent),
+		parent(Parent,Younger).
+
+We have shortened the program by adding the parent
+procedure and have added an extra procedure to embody the rules
+of ancestry.
+
+* A PROCEDURE in a prolog program is a bundle of clauses,
+containing at least one rule, that share the same head predicate and 
+arity.
+
+* Example 3.3 (continued): Let's invoke the goal 
+"ancestor(thomas,peter)":- 
+
+MAIN GOAL =       ancestor( thomas, peter ) 
+matches (bindings             ||    ||
+thomas/Elder,                 ||    || 
+peter/Younger)                ||    ||
+with rule:        ancestor( Elder, Younger ) :- ...... . /* (8) */ 
+                                                  
+     (8)'s only SUB-GOAL =  parent( thomas, peter )
+      matches                         ||    ||
+     (binding thomas/Dad)             ||    || 
+                                      ||    ||
+     with rule:             parent( Dad,  child ) :- ... .      /* (5) */
+
+          (5)'s only SUB-GOAL = father(thomas, paul ) 
+	       -FACT FAILS
+          rule (5) FAILS
+
+     (8)'s only SUB-GOAL =  parent( thomas, peter )
+      matches  (RETRY)                ||    ||
+     (binding thomas/Mum)               ||    || 
+                                      ||    ||
+     with rule:             parent(   M,  Child ) :- ... .      /* (6) */
+
+          (6)'s only SUB-GOAL = father(thomas, paul ) 
+	       -FACT FAILS
+          rule (6) FAILS
+     rule (8) FAILS
+
+At this point we have seen how the main goal activated rule (8),
+which failed, since it could not prove "parent(thomas,peter)".
+Next the main goal activates clause (9):
+
+MAIN GOAL (RETRY) = ancestor( thomas, peter ) 
+matches (bindings             ||    ||
+thomas/Elder,                 ||    || 
+peter/Younger)                ||    ||
+with rule:        ancestor( Elder, Younger ) :- ...... . /* (9) */ 
+                                                  
+     (9)'s first SUB-GOAL = ancestor(thomas,Parent)
+      matches                           ||     ||
+     (binding thomas/M)                 ||     || 
+                                        ||     ||
+     with rule:             ancestor(Elder,Younger) :- ... . /* (8) */
+
+          (8)'s only SUB-GOAL =  parent(thomas,Parent)
+          matches                          ||    ||
+          (binding thomas/M)               ||    || 
+                                           ||    ||
+          with rule:             parent(   Dad,  Child) :- ... .      /* (5) */
+               (5)'s only SUB-GOAL = father(thomas, paul ) 
+	            -FACT SUCCEEDS
+          rule (5) FAILS
+
+
+5- Summary and Suggestions
+
+* A goal succeeds (or is satisfied) if it matches a fact or if it
+  matches a rule head whse subgoals succeed.
+
+* Clauses are searched through top-down, and subgoals are invoked
+  within a rule from left to right.
+
+* Once  a  variable  is  instantiated  to  a  value,  all  other 
+  occurrences  of  that variable within (an activation instance of)
+  a rule are likewise bound. 
+
+* When a rule body's predicate is invoked and succeeds, any of the
+  predicates variables that were bound as a result of that success
+  are likewise bound throughout the rule.
+
+* Prolog procedures are generally multi-purpose in the sense that 
+  they can be activated by goals which contain constants and/or 
+  variables.
+ 
+* The scope of a variable is precisely the clause it appears in.
+
+Suggestions: 
+
+Using your Prolog implementation, verify the examples of 3.1, 3.2,
+and 3.3. Use your trace facility to check through the execution 
+sequences.
+
+Now change the ordering of the examples' clauses and check for
+differences in: 
+ -the answer
+ -the execution sequence of the program,
+ -the efficiency of the program.
+
+
+2.11 Examples
+a. Refering to 1.31a and 1.41a, the goal 'online(moorgate,Line)'
+succeeds since it matches with a fact.
+b. Refering to 1.31b and 1.41b, the goal 'cost(moorgate,euston,40)'
+matches  with the predicate head  'cost(Station1,Station2,40)'  of 
+the  cost  procedure  in tube2.pl.  Each of  the  body  predicates 
+succeed by matching facts hence by 2.1 the main goal succeeds.
+2.12 Exercises
+     Work out whether the following goals succeed, when the file
+ftree.pl has been consulted:(check your answers at the practical)
+a. grandad(isaac,fred).
+b. brother(jacob,esau).
+c. descendant(abraham,jenny).
+2.31 Example
+     Consider  the goal of 2.12a.  It matches with  the  'grandad'
+rule head in ftree.pl with instantiations X = isaac, Y = fred. The 
+'father' subgoal is then activated but with X bound to isaac. 
+2.32 Example
+     Following  from  2.31,  the 'father'  subgoal  succeeds  with
+instantiation  Z  = jacob.  This binds Z to jacob  throughout  the 
+rule.  The final subgoal invoked is 'parent(jacob,fred)' since Z 
+and Y are both bound to those values by this time.
+
+2.6 Practical Exercises                                    
+1. Using the Prolog implementation, check your answers to 2.12. 
+2. Compose rules defining brother, sister, uncle (etc) relations,
+add them to ftree.pl and test them.
+3. Experiment with the 'route' procedure given in tube3.pl. What
+differences will changes to the subgoal ordering make?
+4. Modify the sameline predicate in tube2.pl so that it will fail
+if  Station1  equals Station2 (You need to  consult  the  C-Prolog 
+manual for definitions of the special 'not' and '=' predicates).    
+    
+TUTORIAL 4: Bactracking, Recursion and the Cut.
+
+*  This  tutorial will cover the more complex control  aspects  of 
+Prolog. 
+
+1- Bactracking
+
+* In the last tutorial we gave a rather simple idea of goal 
+sequencing  and success:  an invoked goal succeeding if  it  first 
+finds a match with a fact,  or activating a rule if it first finds 
+a match with a rule head; otherwise failing.   If  the  main  goal 
+fails then Prolog simply replies "no"; but what happens to the Prolog
+execution sequence when sub-goals fail?  
+
+* In example 3.3 of the last tutorial we saw how the initial activation
+of rule (8) failed because its first goal invocation failed. This
+is a special case of the general mechanism of backtracking:
+
+* Consider a rule of the form:
+ 
+A :- ... B,C ... .   (where A, B and C are arbitary predicates).    
+
+Assume:
+- The rule is activated by a goal predicate matching with A;
+- All the subgoals succeed up to and including B;
+- C fails. 
+Then:          (Prolog backtracks... )
+Prolog  will  attempt to RE-SATISFY B so  that  it  may 
+succeed with a different set of bindings on its variables. This is
+accomplished  by  failing the match  of the last invoked predicate 
+to succeed by matching a fact,  and continuing down the program to 
+find an alternative match. B is re-satisfied thus:
+
+-  If B had succeeded by matching with the nth clause which was  a 
+FACT,  then  an  attempt is made to re-succeed B beginning  with  the 
+(n+1)th clause.
+
+- if B had succeeded by matching with a rule head B1 of the rule:
+     B1 :- D,...,E,F. 
+whose body predicates D,...,E,F had all succeeded, then an attempt is 
+made to re-satisfy F. If F subsequently fails, Prolog backtracks
+to F.
+
+Also note also the following: 
+
+* If B succeeds again,  C is invoked with the new bindings; if B
+fails, Prolog may backtrack further.
+
+* If backtracking ever reaches the ':-' symbol,  then the whole 
+rule  is  said to have failed.  (Note that predicates match  in  a
+unique  way,  so  an  alternative set of  bindings  can  never  be 
+obtained from a goal matched with a rule head.) 
+
+
+* Example 4.1: Recall the "relation" program of 3.1; we will use it
+again with the old clauses (1) and (3) swapped:
+
+father(thomas,paul).                    /* (3) */
+mother(frances,joseph).                 /* (2) */ 
+father(paul,peter).                     /* (1) */
+father(thomas,frances).                 /* (4) */
+grandfather(Gran,Child) :-              /* (5) */ 
+                    father(Dad,Child),
+                    father(Gran,Dad).
+grandfather(Gran,Child) :-              /* (6) */
+                    mother(Mum,Child), 
+                    father(Gran,Mum).
+
+Consider execution of the main goal "grandfather(thomas,Child)".
+Rule (5) will be activated and "father(Dad,Child)" invoked: 
+
+        (5)'s first sub-goal = father(Dad,  Child)
+        matches                        ||     ||
+        (bindings thomas/Dad,          ||     ||
+        paul/Child)                    ||     ||
+        with                   father(thomas,paul)      /* (3) */
+
+        (5)'s second sub-goal = father(thomas, thomas)
+        FAILS.
+
+Bactracking now proceeds by failing the last match that succeeded
+the first sub-goal "father(Dad,Child)" and searching down the program
+for an alternative match, starting at clause (2). The 3rd clause
+"father(paul,peter)" provides this, and (5)'s second subgoal succeeds
+with the alternative bindings this provides:
+
+(RETRY) (5)'s first sub-goal = father(Dad,  Child)
+        matches                        ||     ||
+        (bindings paul/Dad,            ||     ||
+        peter/Child)                   ||     ||
+        with                   father(paul, peter )     /* (1) */
+
+        (5)'s second sub-goal = father(thomas, paul)
+        SUCEEDS.
+
+* Try a hand run of example 4.1 with the clauses in the original order
+of 3.1.  You should find that Prolog required no backtracking, but 
+the answer remains the same.
+
+* Example 4.3: We return to our tube-route planner. 
+
+online(kings_X,victoria).                        /* (1) */
+online(kings_X,piccadilly).                      /* (2) */
+online(kings_X,northern).                        /* (3) */
+online(holhurn,piccadilly).                      /* (4) */
+online(angel,northern).                          /* (5) */
+sameline(S1,S2,L) :- online(S1,L),online(S2,L).  /* (6) */
+
+Consider the goal "sameline(kings_cross,angel,Line)."
+Rule (6) will be activated:
+
+     sameline(kings_X,angel,Line)
+kings_X/S1,     ||     ||    ||          
+angel/S2,       ||     ||    ||  
+Line/L          ||     ||    ||  
+        sameline(  S1,   S2,    L) :-   ...         /* (6) */
+        (6)'s first subgoal =   online(kings_X,Line)
+        matches                         ||      ||
+        (binding                        ||      ||
+        victoria/Line)                  ||      ||
+        with                    online(kings_X,victoria) /* (1) */
+        (6)'s second subgoal =  online(angel,victoria)
+        FAILS.
+
+(RETRY) (6)'s first subgoal =   online(kings_X,Line)
+        matches                         ||      ||
+        (binding                        ||      ||
+        piccadilly/Line)                ||      ||
+        with                    online(kings_X,piccadilly) /* (1) */
+       (6)'s second subgoal =  online(angel,piccadilly)
+       FAILS.
+
+(RETRY) (6)'s first subgoal =   online(kings_X,Line)
+        matches                         ||      ||
+        (binding                        ||      ||
+        northern/Line)                  ||      ||
+        with                    online(kings_X,northern)  /* (1) */
+       (6)'s second subgoal =  online(angel,northern)
+       matches (5) and SUCCEEDS.
+
+* Example 4.2 shows that the ordering of facts within a Prolog 
+program heavily affects backtracking. 
+
+* Example 4.3: Consider an "abstract" example program segment:
+ 
+A1 :- B,C.      /* (1) */
+B1 :- D,E,F.    /* (2) */ 
+F1 :- G,H.      /* (3) */
+H1.             /* (4) */
+H2.             /* (5) */
+
+The identifiers (B - H, A1, B1, F1, H1, H2)  denote arbitary predicates,
+but we assume the following scenario:
+     
+- Rule (1) is activated by a main goal of A;
+     - B succeeded by the activation and success of (2), 
+     - F succeeded   "        "       "      "    " (3),
+     - H succeeded by matching with H1.
+and
+- C fails. What happens next?
+
+
+* answer: 
+     Prolog attempts to re-satisfy B;
+therefore Prolog attempts to re-satisfy F ((2) is re-activated); 
+therefore Prolog attempts to re-satisfy H.((3) is re-activated);
+Since H succeeded by matching with a fact,  H1, then this match is 
+undone   and  Prolog  starts  searching  at  clause  (5)  for   an 
+alternative.  If H matches with H2, then (3), (2) and B re-succeed 
+and C is reinvoked with possibly different bindings. 
+
+* Example 4.4  Consider the following program:
+
+furry(tabby).                           /* (1) */
+furry(leo).                             /* (2) */
+small(tabby).                           /* (3) */
+has_whiskers(leo).                      /* (4) */
+has_big_teeth(leo).                     /* (5) */
+has_whiskers(tabby).                    /* (6) */
+cat(X) :- has_whiskers(X), furry(X).    /* (7) */
+timid(X) :- cat(X), small(X).           /* (8) */
+
+Assume goal "timid(X)" is invoked:
+ rule (8) is activated (both occurrences of X are bound together);
+ subgoal "cat(X)" is invoked;
+     rule (7) is activated (occurrences of X are bound together);
+     subgoal "has_whiskers(X)" is invoked; 
+          it succeeds with binding X = leo, matching (4);
+     subgoal "furry(leo)" is invoked;
+          it succeeds, matching (2);
+ subgoal "cat(X)" therefore succeeds with X = leo;
+ subgoal "small(leo)" is invoked; 
+     it fails!
+
+* Before reading on, try to write down the trace for the
+rest of the execution....
+
+answer: Prolog would try to re-satisfy "cat(X)";
+
+-rule (7) is re-activated and an attempt is made to resatisfy the
+last invoked predicate "furry(leo)" starting at clause (3);
+
+-this fails (and is fruitless anyway!) and backtracking proceeds to 
+the predicate on the left, "has_whiskers(X)":
+
+(RETRY) subgoal "has_whiskers(X)" is re-invoked, starting at (5); 
+            it succeeds with binding X = tabby, matching (6);
+        subgoal "furry(tabby)" is invoked;
+            it succeeds, matching (1);
+     subgoal "cat(X)" therefore succeeds with X = tabby;
+     subgoal "small(tabby)" is invoked;
+     it succeeds, matching (3);
+main goal "timid(X)" therefore succeeds with X = tabby.
+
+
+
+* Using our definition and examples you should be coming to
+understand the nature and importance of backtracking. Generally a
+Prolog program stores its information in the form of facts which 
+are subsequently drawn on from several procedures. For a particular
+procedure's subgoals, the ordering of facts will not always be such
+that correct instantiations for its variables are found without some
+backtracking.
+
+Exercises:
+
+* Try the examples above with your prolog implementation;
+use your trace facility to check the execution sequence.
+
+* If the Prolog user types a ";" in response to the set of bindings
+given with the success of a main goal, it will search for an
+alternative set. Prolog is forced to backtrack, which means trying
+to re-satisfy the last goal to succeed. Try to verify this with some
+of the examples above.  
+
+* In doing the exercise above you will find that some goals containg
+variables can succeed with more than one instantiation: e.g. the very
+simple goal "online(X,northern)" of program 4.3 can succeed with
+two distinct instantiations (and lots more if the program were 
+properly extended!). Prolog provides a built-in predicate defined
+
+"setof(<variable>, <goal predicate containing variable>, <list> )"
+
+which collects ALL distinct instatiations for <variable> into the
+<list> which satisfy the goal (see next tutorial for details of
+lists). Try invoking these goals with program 4.3:   
+
+a. setof(X,online(X,northern),Y).
+(answer: Y = [kings_X,angel])
+
+b. setof(X,online(kings_X,X),Y).  
+(answer: Y = [victoria, piccadilly, northern])
+
+2- Recursion
+
+     To write serious programs in Prolog (or in any other non-
+imperitive language) one must use the concept of recursion, i.e. a 
+procedure  calling  itself.  
+
+* The role of recursion:
+
+ - it does for Prolog what 'iteration' (do-loops, while-loops)
+does for imperitive languages:  provides a means for encoding
+non-trivial algorithms.
+
+ - all known algorithms can be encoded recursively, and many
+are more naturally defined this way.
+
+* Examples of recursion:
+
+ - a very well known example is the factorial function:
+
+     fatorial(N) = if N=0 then 1 else N*factorial(N-1)
+
+ - the 'ancestor' procedure of example 3.? is a typical example of
+recursion in Prolog:
+
+* It  employs  'tail  recursion' - the last  subgoal  in  the 
+second rule calls itself.
+
+* It contains a non-recursive clause (the first rule) so that
+recursion will eventually stop.
+
+* It captures the concept naturally yet operationally:  X has
+a descendant Y if either X is the parent of Y or  Y  descends
+from one of X's children. 
+
+* Pitfalls!
+
+ - Care must be taken when designing recursive procedures  to
+ensure that termination will occur on any input. 
+For instance, it is especially easy to unknowingly create infinite
+loops with mutually recursive procedures: 
+
+     bill :- ben.   /* a call to bill or ben will cause looping */
+
+     ben  :- bill.  
+
+Is there any way that the program of 3.? can loop indefinitely?     
+
+ - Recursion may be very inefficient both in terms of time and 
+     space.          
+
+For instance,  consider the recursive ancestor rule:  Prolog 
+must  keep a stack of records holding all the   variable  bindings 
+from each of it's activations. 
+
+* EXAMPLE -- ANCESTOR PROGRAM
+
+Exercises:
+
+* Recursive procedures can be both powerful but also difficult
+to  understand (especially if they're someone else's).  Here is  a 
+short solution to the famous 'Towers of Hanoi' problem: 
+
+     move(0,_,_,_).       /* recursion stops at N = 0 */
+     move(N,Left,Middle,Right) :-
+               M is N-1,  /* 'is' is like assignment-see later */  
+               move(M,Left,Right,Middle),
+               write('move from '),write(Left),
+               write(' to '),write(Right),nl,
+               move(M,Middle,Left,Right).
+     hanoi(N) :- move(N,left_peg,middle_peg,right_peg).
+
+* Examine the recursive 'route' procedure of tube4.pl 
+
+
+3- The Cut                                                 
+
+We will now return to the subject of backtracking:
+
+* If  a (sub)goal fails for any reason during execution  Prolog
+will  always  try to bactrack. This is necessary for programs such
+as our examples above; but in some cases this  will be inefficient,
+in some cases wrong!.
+
+* 4.5 Example: Consider  a  program which must  differentiate  an
+algebraic expression   F  then solve the equation dF/dx =  0.
+Part  of  the program may look like:
+
+main(F, Solution) :- diffx(F, DF), solve(DF, Solution). 
+
+Since differentiation is a function it must return  a unique 
+result (which would instantiate DF), therefore  if 'solve'  fails 
+we do not want Prolog backtracking to within 'diffx', yet that is 
+exactly what would happen. At best, backtracking would continue
+all the way back through diffx's definition and eventually fail,
+which would be inefficient; at worst, it would find an alternative
+instantiation for "DF", which must be incorrect. 
+
+* Definition of the cut: The cut is written '!'.  It is a special
+PREDICATE with the following properties:  
+
+ - As  a  subgoal it always succeeds the first  time  it  is 
+invoked in an activation of a rule.
+
+ - If on backtracking the cut is ever re-invoked, it not only FAILS
+the  current rule activation BUT ALSO IMMEDIATELY FAILS THE  GOAL
+THAT  ACTIVATED THE RULE  (i.e the goal is not allowed  to  search 
+down for an alternative match).
+
+ - It may be placed anywhere (as a predicate) in the body of
+a rule.
+
+* To avoid backtracking in example 4.5 we may use the cut thus:
+
+     main(F, solution) :- diffx(F, DF), !, solve(DF, solution).
+
+If the "solve" subgoal were ever to fail, then the goal which 
+invoke "main" would immediately fail.
+
+* Example 4.6:  Consider another "abstract" program with rules of
+the form (where A, B, C, X, Y ,Z are arbitary predicates):
+
+     X :- ... Y, Z, ...        /* rule 1 */
+     A :- ... B, !, C, ...     /* rule 2 */
+
+Assume the following takes place:
+
+(a) rule 1 is activated and its subgoals succeed up to Y; 
+(b) Z is invoked and matches A, thereby activating rule 2;
+(c) rule 2's subgoals succeed past B and the cut;
+(d) C fails (or succeeds but subsequently fails on backtracking);
+
+then...
+
+ - the cut will cause the goal that activated the rule it is in, 
+i.e.  Z,  to fail.  Control will next backtrack in rule 1 and  an
+attempt to re-satisfy Y will be made.
+
+* Exercise: Consider the following prolog program:
+
+brick(shape1).
+brick(shape2). 
+brick(shape3).   
+cylindrical(shape2).  
+cylindrical(shape3).
+smaller(shape2,shape3).
+smaller(shape2,shape4).
+smaller(shape3,shape4).
+supports(shape2,shape4).
+supports(shape3,shape4).
+
+pillar(X) :- brick(X),cylindrical(X),!,smaller(X,Y),supports(X,Y).
+
+
+Describe the program's behaviour when called with '?-pillar(X)'.
+How would this change if the rule was changed to:
+
+pillar(X) :- brick(X),cylindrical(X),smaller(X,Y),!,supports(X,Y).
+
+
+
+
+
+
+
+* The cut is sometimes compared to a kind of fence:
+
+
+                       || 
+         -->         |  |        -->          -->
+                   | !  |      control
+              ,  |______| ,
+
+
+ -one that can be easily crossed from left to  right,  but 
+not vica-versa.         
+
+* The cut makes its left hand side deterministic in the sense
+that it commits the rule to the binding 'choices' made before it.
+
+* The cut can save a good deal of space:
+Local  stack  to the left of a cut is re-used since  it  will
+never be needed on backtracking.
+
+* The cut can save a good deal of time:
+Even if procedures are designed to give no alternative result
+when backtracked over, the cut makes sure such useless backtracking
+never happens.
+
+Summary:           
+
+* Non-trivial algorithms in Prolog usually involve recursive 
+procedures. 
+
+* The cut is a predicate which fails the calling goal of the 
+the rule it is in if control backtracks on to it.
+
+*  The  trace facility helps with the debugging  of  logical
+errors, and aids understanding of Prolog's procedural behaviour.
+
+Exercises:                              
+
+1. Implement the program in 3.44, and test it with the cut in 
+various positions.
+
+2. More tube examples: (refer to tube3.pl) Modify the route
+procedure so that
+   a. it can handle routes of more than one station change;
+   b. the cost of the journey is printed out as well as the route; 
+   c. alternate routes can be asked for by typing ";" ;
+   d. the direction of the journey along each tube line is output.
+
+
+
+
+
+
+
+
